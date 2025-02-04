@@ -1,0 +1,62 @@
+{
+  "invoice_number": "YYYY-XXX",
+  "collect_vat": true,
+  "invoicer_info": {
+    "name": "EI Jean Martin",
+    "trade_name": "MartinCorp.",
+    "address_line_1": "1 rue des Factures",
+    "address_line_2": "75001 Paris",
+    "email": "jean@martincorp.io",
+    "website": "martincorp.io",
+    "phone_number": "01 22 33 44 55",
+    "siren": "123456789",
+    "siret": "12345678900011",
+    "ape_code": "60.02A"
+  },
+  "logo_uri": "https://cdn-icons-png.flaticon.com/128/85/85966.png",
+  "client_info": {
+    "name": "Client SARL",
+    "address_line_1": "2 rue des Clients",
+    "address_line_2": "75002 Paris",
+    "is_pro": true,
+    "siren": "777888999"
+  },
+  "payment_info": {
+    "bank_transfers_accepted": true,
+    "iban": "FR1420041010050500013M02606",
+    "bic": "ABCDFRPPXXX",
+    "bank_address": "3 rue de la Banque",
+    "cheques_accepted": true,
+    "payee": "Jean Martin",
+    "cash_accepted": true
+  },
+  "rc_pro_info": {
+    "name": "Exemple Assurances",
+    "address_line_1": "4 rue des Sinistres",
+    "address_line_2": "75004 Paris",
+    "geographical_coverage": "Monde entier hors USA"
+  },
+  "invoiced_items": [
+    {
+      "name": "Etude des spécifications techniques",
+      "price": 420,
+      "quantity": 18,
+      "vat_rate": 20.0
+    },
+    {
+      "name": "Autre service",
+      "price": 32.99,
+      "quantity": 5,
+      "vat_rate": 15.5
+    }
+  ],
+  "billing_details": {
+    "bill_whole_current_month": true,
+    "billing_date_is_end_of_current_month": true,
+    "payment_period_details": {
+      "number_of_days": 12,
+      "business_days_only": true
+    }
+  },
+  "contract_number": "ABC 123.987"
+}

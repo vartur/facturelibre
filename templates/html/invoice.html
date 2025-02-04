@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="author" content="{{ invoicer_name }}">
+    <meta name="generator" content="facturelibre">
+    <meta name="description" content="Facture N°{{ invoice_number }} du {{ billing_date }} pour {{ client_name }}">
+    <meta name="keywords" content="Facture, {{ invoice_number }}, {{ invoicer_name }}, {{ client_name }}">
+    <title>Facture n°{{ invoice_number }} - {{ client_name }}</title>
+    <style>
+        {{ inline_css | safe }}
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        {% if display_logo %}
+            <div class="logo">
+                <img src="{{ logo_uri }}" alt="logo" />
+            </div>
+        {% endif %}
+        <div class="company-info">
+            {% if invoicer_has_trade_name %}
+                <strong>{{ invoicer_trade_name }}</strong><br>
+                {{ invoicer_name }}<br>
+            {% else %}
+                <strong>{{ invoicer_name }}</strong><br>
+            {% endif %}
+            {{ invoicer_address_line_1 }}<br>
+            {{ invoicer_address_line_2 }}<br>
+            <i style="font-size: 10px;"><b>SIREN</b> {{ invoicer_siren }}</i><br>
+            {% if collect_vat %}
+                <i style="font-size: 10px;"><b>TVA</b> {{ invoicer_vat_number }}</i>
+            {% endif %}
+        </div>
+        <div class="invoice-info">
+            <b>FACTURE</b><br>
+            {{ invoice_number }}<br>
+            <b>DATE</b><br>
+            {{ billing_date }}
+        </div>
+    </div>
+
+    <div class="client-info">
+        <strong>CLIENT</strong><br>
+        {{ client_name }}<br>
+        {{ client_address_line_1 }}<br>
+        {{ client_address_line_2 }}<br>
+        {% if client_is_pro %}
+            <i style="font-size: 10px;"><b>SIREN</b> {{ client_siren }}</i><br>
+            {% if collect_vat %}
+                <i style="font-size: 10px;"><b>TVA</b> {{ client_vat_number }}</i>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <p><i>
+        <strong> {% if display_contract_number %}Contrat n°{{ contract_number }}<br>{% endif %}
+            Prestations de services effectuées du {{ billing_period_start }} au {{ billing_period_end }}</strong>
+    </i></p>
+
+    {% if collect_vat %}
+        <table>
+            <thead>
+            <tr style="border-bottom:1px solid black;">
+                <th>Service</th>
+                <th>Px. unit. HT</th>
+                <th>Qté.</th>
+                <th>Montant HT</th>
+                <th>TVA</th>
+                <th>Montant TTC</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in invoiced_items %}
+                <tr {% if loop.last %} style="border-bottom:1px solid black;" {% endif %}>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price }} €</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.gross_amount }} €</td>
+                    <td>{{ item.vat_rate }} %</td>
+                    <td>{{ item.total_amount }} €</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="2" style="text-align:right;"><i>Total HT</i></td>
+                <td><i>{{ total_gross_amount }} €</i></td>
+            </tr>
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="2" style="text-align:right;"><i>Total TVA</i></td>
+                <td><i>{{ total_vat_amount }} €</i></td>
+            </tr>
+            <tr>
+                <td colspan="3"></td>
+                <td colspan="2" style="text-align:right; "><b>Total TTC</b></td>
+                <td><b>{{ total_invoice_amount }} €</b></td>
+            </tr>
+            </tfoot>
+        </table>
+    {% else %}
+        <table>
+            <thead>
+            <tr style="border-bottom:1px solid black;">
+                <th>Service</th>
+                <th>Prix unitaire HT</th>
+                <th>Quantité</th>
+                <th>Montant HT</th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for item in invoiced_items %}
+                <tr {% if loop.last %} style="border-bottom:1px solid black;" {% endif %}>
+                    <td>{{ item.name }}</td>
+                    <td>{{ item.price }} €</td>
+                    <td>{{ item.quantity }}</td>
+                    <td>{{ item.gross_amount }} €</td>
+                </tr>
+            {% endfor %}
+            </tbody>
+            <tfoot>
+            <tr>
+                <td colspan="1"></td>
+                <td colspan="2" style="text-align:right;"><b>Total HT</b></td>
+                <td><b>{{ total_gross_amount }} €</b></td>
+            </tr>
+            </tfoot>
+        </table>
+        <div style="float: right; font-size: 7px;">
+            TVA non applicable, art. 293 B du CGI<br>
+        </div>
+    {% endif %}
+
+    <div class="payment_info">
+        <h3>Conditions et modalités de paiement<br></h3>
+        Paiement à effectuer sous {{ payment_period_days }} jours {% if business_days %} ouvrés{% endif %}, avant le {{ payment_date }}
+
+        {% if bank_transfers_accepted %}
+            <p>
+                <strong>Virement bancaire</strong><br>
+                IBAN : <i>{{ iban }}</i><br>
+                BIC : <i>{{ bic }}</i><br>
+                Domiciliation : <i>{{ bank_address }}</i>
+            </p>
+        {% endif %}
+
+        {% if cheques_accepted %}
+            <p>
+                <strong>Chèque</strong><br>
+                <i>À l'ordre de {{ payee }}</i>
+            </p>
+        {% endif %}
+
+        {% if cash_accepted %}
+            <p><strong>Espèces</strong></p>
+        {% endif %}
+    </div>
+
+    {% if client_is_pro %}
+        <p><i>Pour tout professionnel, en cas de retard de paiement, seront exigibles, conformément à l'article L441-6 du code de
+        commerce, une indemnité calculée sur la base de trois fois le taux d'intérêt légal en vigueur ainsi qu'une indemnité
+        forfaitaire pour frais de recouvrement de 40 euros.</i></p>
+    {% endif %}
+
+    <div class="footer">
+        {{ invoicer_name }} - {{ invoicer_address_line_1 }} {{ invoicer_address_line_2 }}<br>
+
+        {% if invoicer_is_craftsman %}
+            Code APRM {{ aprm_code }} - Département d'immatriculation {{ registration_dep }}
+        {% else %}
+            Code APE {{ ape_code }}
+        {% endif %}
+        - SIRET {{ invoicer_siret }}<br>
+
+        {% if display_rc_pro %}
+            RC PRO souscrite auprès de {{ rc_pro_name }}, {{ rc_pro_address_line_1 }} {{ rc_pro_address_line_2 }}<br>
+            Couverture géographique : {{ rc_pro_geo_cov }}<br>
+        {% endif %}
+
+        <a href="tel:{{ full_phone_number }}">{{ invoicer_phone_number }}</a>
+        - <a href="mailto:{{ invoicer_email }}">{{ invoicer_email }}</a>
+
+        {% if invoicer_has_website %}
+            - <a href="{{ invoicer_website }}">{{ invoicer_website }}</a>
+        {% endif %}
+
+    </div>
+</div>
+</body>
+</html>
