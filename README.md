@@ -1,3 +1,5 @@
+[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/vartur/facturelibre/blob/main/README.fr.md)
+
 # 📄 FactureLibre: a PDF invoice generator for French micro-entrepreneurs
 
 A simple and efficient tool for self-employed French micro-entrepreneurs to generate professional PDF invoices. This
