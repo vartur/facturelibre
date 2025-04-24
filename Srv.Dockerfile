@@ -8,6 +8,9 @@ ENV LANG=fr_FR.UTF-8 \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Set port
+ENV PORT=8000
+
 # Install required system dependencies in one layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -37,6 +40,14 @@ RUN pip install --upgrade pip && \
 # Copy application source
 COPY . .
 
-# Default command with support for file argument override
-ENTRYPOINT ["python", "main.py"]
-CMD ["invoice_data.json"]
+# Expose the port
+EXPOSE ${PORT}
+
+# Health check to ensure the application is running
+HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
+  CMD curl --fail http://localhost:$PORT/health || exit 1
+
+# Launch the server
+CMD uvicorn main:app --host 0.0.0.0 --port $PORT
+
+

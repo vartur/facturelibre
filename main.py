@@ -1,9 +1,12 @@
 import locale
 import logging
+import os
 import sys
 
+from fastapi import FastAPI, HTTPException, Body, BackgroundTasks
 from jinja2 import Environment, FileSystemLoader
 from pydantic import ValidationError
+from starlette.responses import FileResponse
 from weasyprint import HTML
 
 from data_processing.InvoiceDataProcessor import InvoiceDataProcessor
@@ -18,6 +21,8 @@ logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 logging.getLogger("fontTools.ttLib").setLevel(logging.ERROR)
 logging.getLogger("fontTools.subset").setLevel(logging.ERROR)
+
+app = FastAPI(title="Invoice Generator API")
 
 
 def generate_pdf_invoice(invoice_data_json: str, invoice_locale='fr_FR.UTF-8') -> str:
@@ -37,6 +42,10 @@ def generate_pdf_invoice(invoice_data_json: str, invoice_locale='fr_FR.UTF-8') -
         logging.error(f"Errors occurred during the validation of the invoice data: {inv_pars}")
         return "Validation failed"
 
+    return write_invoice(invoice_data)
+
+
+def write_invoice(invoice_data: InvoiceData):
     # Pre-process the data to get the template arguments
     logging.info("Pre-processing the invoice data...")
     template_data = InvoiceDataProcessor(invoice_data).get_template_data()
@@ -51,18 +60,48 @@ def generate_pdf_invoice(invoice_data_json: str, invoice_locale='fr_FR.UTF-8') -
     template = env.get_template('html/invoice.html')
     html_content = template.render(template_data)
 
-    # Set the PDF metadata
+    # Set the PDF metadata and output directory
     title = f"FACTURE N°{invoice_data.invoice_number} - {invoice_data.client_info.name}"
+    output_dir = "output"
+    os.makedirs(output_dir, exist_ok=True)  # Create output directory if it doesn't exist
+    pdf_file_path = os.path.join(output_dir, f"{title}.pdf")
 
-    # Generate the PDF from HTML
-    logging.info("Generating the PDF invoice...")
-    pdf_file_name = f"{title}.pdf"
+    # Generate the PDF
+    logging.info(f"Generating the PDF invoice at '{pdf_file_path}'...")
     pdf_document = HTML(string=html_content).render()
+    pdf_document.write_pdf(pdf_file_path, pdf_variant='pdf/a-3b')
+    os.chmod(pdf_file_path, 0o777)
 
-    pdf_document.write_pdf(pdf_file_name, pdf_variant='pdf/a-3b')
+    return pdf_file_path
 
-    return title
 
+# Background task to delete the file
+def delete_pdf_file(file_path: str):
+    if os.path.exists(file_path):
+        os.remove(file_path)
+        logging.info(f"Deleted the file: {file_path}")
+    else:
+        logging.warning(f"File not found: {file_path}")
+
+
+@app.post("/generate-invoice", response_class=FileResponse)
+async def generate_invoice(data: InvoiceData = Body(...), background_tasks: BackgroundTasks = BackgroundTasks()):
+    """
+    Generate a PDF invoice from the provided JSON data.
+    """
+    try:
+        pdf_path = write_invoice(invoice_data=data)
+        background_tasks.add_task(delete_pdf_file, pdf_path)
+        return FileResponse(path=pdf_path, filename=os.path.basename(pdf_path), media_type="application/pdf")
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logging.error(f"Unexpected error: {e}")
+        raise HTTPException(status_code=500, detail="Internal Server Error")
+
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
 
 def main():
     if len(sys.argv) != 2:
