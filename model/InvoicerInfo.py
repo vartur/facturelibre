@@ -10,7 +10,8 @@ class InvoicerInfo(BaseModel):
         name (str): The invoicer's company name.
         trade_name (Optional[str]): The invoicer's trade name (if applicable).
         address_line_1 (str): The first part of the invoicer's address, including street number and name.
-        address_line_2 (str): The second part of the invoicer's address, including postal code and city.
+        postcode (str): The postcode of the invoicer's address.
+        city (str): The city of the invoicer's address.
         email (str): The invoicer's email address.
         phone_number (str): The invoicer's phone number, must follow a specific pattern for French numbers.
         website (Optional[str]): The invoicer's website (if applicable).
@@ -34,7 +35,8 @@ class InvoicerInfo(BaseModel):
     name: str = Field(..., description="The invoicer's company name")
     trade_name: Optional[str] = Field(None, description="The invoicer's trade name")
     address_line_1: str = Field(..., description="The first part of the invoicer's address (number and street name)")
-    address_line_2: str = Field(..., description="The second part of the invoicer's address (postal code and city)")
+    postcode: str = Field(..., description="The postcode of the invoicer's address")
+    city: str = Field(..., description="The city of the invoicer's address")
     email: str = Field(..., description="The invoicer's email address")
     phone_number: str = Field(..., pattern=r'^(0[1-7])(?: \d{2}){4}$', description="The invoicer's phone number")
     website: Optional[str] = Field(None, description="The invoicer's website")

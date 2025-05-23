@@ -5,6 +5,8 @@ from typing import Any
 import numpy
 from holidays.countries import France
 
+from currency_symbols import CurrencySymbols
+
 from model.InvoiceData import InvoiceData
 
 
@@ -338,7 +340,8 @@ class InvoiceDataProcessor:
                      "invoicer_has_trade_name": invoicer_info.trade_name is not None,
                      "invoicer_trade_name": invoicer_info.trade_name,
                      "invoicer_address_line_1": invoicer_info.address_line_1,
-                     "invoicer_address_line_2": invoicer_info.address_line_2,
+                     "invoicer_postcode": invoicer_info.postcode,
+                     "invoicer_city": invoicer_info.city,
                      "invoicer_siren": format_siren(invoicer_info.siren),
                      "invoicer_siret": format_siret(invoicer_info.siret),
                      "invoicer_is_craftsman": invoicer_info.is_craftsman,
@@ -353,7 +356,8 @@ class InvoiceDataProcessor:
                      "invoicer_website": invoicer_info.website,
                      "client_name": client_info.name,
                      "client_address_line_1": client_info.address_line_1,
-                     "client_address_line_2": client_info.address_line_2,
+                     "client_postcode": client_info.postcode,
+                     "client_city": client_info.city,
                      "client_is_pro": client_info.is_pro,
                      "client_siren": format_siren(client_info.siren),
                      "client_vat_number": calculate_vat_number_from_siren(client_info.siren),
@@ -372,6 +376,8 @@ class InvoiceDataProcessor:
                      "payment_period_days": payment_period_details.number_of_days,
                      "business_days": payment_period_details.business_days_only,
                      "payment_date": self.get_invoice_payment_date(),
+                     "currency_code": payment_info.currency_code,
+                     "currency_symbol": CurrencySymbols.get_symbol(payment_info.currency_code),
                      "bank_transfers_accepted": payment_info.bank_transfers_accepted,
                      "iban": format_iban(payment_info.iban) if payment_info.iban else "",
                      "bic": format_bic(payment_info.bic) if payment_info.bic else "",

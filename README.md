@@ -1,46 +1,39 @@
-[![fr](https://img.shields.io/badge/lang-fr-blue.svg)](https://github.com/vartur/facturelibre/blob/main/README.fr.md)
+# 📄 FactureLibre — Professional Invoicing for French micro-entrepreneurs
 
-# 📄 FactureLibre: a PDF invoice generator for French micro-entrepreneurs
+🇫🇷 **Simplify your invoicing. Stay compliant.**
+**FactureLibre** is a lightweight yet powerful tool tailored for French micro-entrepreneurs. It streamlines invoice
+creation while ensuring full compliance with French tax laws and European e-invoicing standards.
 
-A simple and efficient tool for self-employed French micro-entrepreneurs to generate professional PDF invoices. This
-tool helps streamline the invoicing process while ensuring compliance with French tax regulations.
+🇪🇺 Built with pyfactx, it generates PDF A/3 invoices compatible with the **Factur-X** / **ZUGFeRD** (**EN 16931**)
+standard.
 
 ## 🚀 Features
 
-- Generate legally compliant PDF invoices
-- Customizable invoice details (client, services, pricing, etc.)
-- Supports French micro-entrepreneur requirements
+* ✅ Generates legally compliant invoices for French micro-entrepreneurs
+* 🧾 Supports **Factur-X** / **ZUGFeRD** (EN 16931) e-invoicing format
+* 📎 Outputs both human-readable PDF and embedded XML
+* 🪶 Lightweight and easy to use — perfect for freelancers and small businesses
 
 ## 🛠️ Installation
 
-Clone the repository:
+Clone the repository and install the required dependencies:
 
-```sh
+```bash
 git clone git@github.com:vartur/facturelibre.git
 cd facturelibre
-```
-
-Install dependencies:
-
-```sh
 pip install -r requirements.txt
 ```
 
-## 🔧 Usage
+## ⚙️ Usage
 
-Run the application:
+To generate an invoice from a structured JSON file:
 
-```sh
-python main.py <invoice_data_json_file>
+```bash
+python main.py <path_to_invoice_data.json>
 ```
 
-## 🔑 SSH Setup for GitHub
-
-Ensure your GitHub SSH key is configured:
-
-```sh
-ssh -T git@github.com
-```
+Make sure your JSON file contains all the required invoice data. An example is provided
+in [invoice_data.json](./invoice_data.json)
 
 ## 📜 License
 

@@ -9,6 +9,7 @@ class PaymentInfo(BaseModel):
     A class representing the payment information for an invoice.
 
     Attributes:
+        currency_code(str): The invoice's three-letter ISO 4217 currency code.
         bank_transfers_accepted (bool): Whether bank transfers are accepted for the payment.
         iban (Optional[str]): The IBAN for bank transfer payments, if applicable.
         bic (Optional[str]): The BIC for bank transfer payments, if applicable.
@@ -27,6 +28,8 @@ class PaymentInfo(BaseModel):
 
     """
 
+    currency_code: str = Field(..., description="The invoice's three-letter ISO 4217 currency code",
+                               pattern=r'^[A-Z]{3}$')
     bank_transfers_accepted: bool = Field(..., description="Whether or not bank transfers are accepted for the payment")
     iban: Optional[str] = Field(None, description="The IBAN for bank transfer payments")
     bic: Optional[str] = Field(None, description="The BIC for bank transfer payments")

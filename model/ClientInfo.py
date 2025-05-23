@@ -11,7 +11,8 @@ class ClientInfo(BaseModel):
     Attributes:
         name (str): The client's name.
         address_line_1 (str): The first part of the client's address, including the street number and name.
-        address_line_2 (str): The second part of the client's address, including the postal code and city.
+        postcode (str): The postcode of the client's address.
+        city (str): The city of the client's address.
         is_pro (bool): Indicates whether the client is a professional (business entity).
         siren (Optional[str]): The client's 9-digit SIREN number. If the client is a professional, this must be provided.
 
@@ -25,7 +26,8 @@ class ClientInfo(BaseModel):
 
     name: str = Field(..., description="The client's name")
     address_line_1: str = Field(..., description="The first part of the client's address (number and street name)")
-    address_line_2: str = Field(..., description="The second part of the client's address (postal code and city)")
+    postcode: str = Field(..., description="The postcode of the client's address")
+    city: str = Field(..., description="The city of the client's address")
     is_pro: bool = Field(False, description="Whether or not the client is a professional")
     siren: Optional[str] = Field(None, pattern=r'^\d{9}$', description="The client's 9-digit SIREN number")
 

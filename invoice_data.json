@@ -5,7 +5,8 @@
     "name": "EI Jean Martin",
     "trade_name": "MartinCorp.",
     "address_line_1": "1 rue des Factures",
-    "address_line_2": "75001 Paris",
+    "postcode": "75001",
+    "city": "Paris",
     "email": "jean@martincorp.io",
     "website": "martincorp.io",
     "phone_number": "01 22 33 44 55",
@@ -17,11 +18,13 @@
   "client_info": {
     "name": "Client SARL",
     "address_line_1": "2 rue des Clients",
-    "address_line_2": "75002 Paris",
+    "postcode": "75002",
+    "city": "Paris",
     "is_pro": true,
     "siren": "777888999"
   },
   "payment_info": {
+    "currency_code": "EUR",
     "bank_transfers_accepted": true,
     "iban": "FR1420041010050500013M02606",
     "bic": "ABCDFRPPXXX",
@@ -47,7 +50,7 @@
       "name": "Autre service",
       "price": 32.99,
       "quantity": 5,
-      "vat_rate": 15.5
+      "vat_rate": 10.0
     }
   ],
   "billing_details": {

@@ -5,10 +5,13 @@ import sys
 
 from fastapi import FastAPI, HTTPException, Body, BackgroundTasks
 from jinja2 import Environment, FileSystemLoader
+from lxml import etree as ET
 from pydantic import ValidationError
 from starlette.responses import FileResponse
-from weasyprint import HTML
+from weasyprint import HTML, Attachment
+from pyfactx import FacturXGenerator
 
+from data_processing.FacturXProcessor import FacturXProcessor
 from data_processing.InvoiceDataProcessor import InvoiceDataProcessor
 from model.InvoiceData import InvoiceData
 
@@ -45,10 +48,20 @@ def generate_pdf_invoice(invoice_data_json: str, invoice_locale='fr_FR.UTF-8') -
     return write_invoice(invoice_data)
 
 
+def rdf_metadata_generator() -> bytes:
+    return ET.tostring(rdf_xml_root)
+
+
+
+
 def write_invoice(invoice_data: InvoiceData):
     # Pre-process the data to get the template arguments
     logging.info("Pre-processing the invoice data...")
     template_data = InvoiceDataProcessor(invoice_data).get_template_data()
+
+    # Generate the Factur-X XML
+    logging.info("Generating the Factur-X XML document...")
+    xml_tree = FacturXProcessor.generate_facturx_xml(InvoiceDataProcessor(invoice_data).get_template_data(formatted=False))
 
     # Read the CSS and add it to the template data
     with open('static/css/style.css', 'r') as f:
@@ -69,6 +82,15 @@ def write_invoice(invoice_data: InvoiceData):
     # Generate the PDF
     logging.info(f"Generating the PDF invoice at '{pdf_file_path}'...")
     pdf_document = HTML(string=html_content).render()
+    xml_data: bytes = ET.tostring(xml_tree, xml_declaration=True, encoding='utf-8', pretty_print=True).decode('utf-8')
+    pdf_document.metadata.attachments = [
+        Attachment(
+            string=xml_data,
+            base_url='factur-x.xml',
+            description='Factur-x invoice',
+        ),
+    ]
+    pdf_document.metadata.rdf_metadata_generator = rdf_metadata_generator
     pdf_document.write_pdf(pdf_file_path, pdf_variant='pdf/a-3b')
     os.chmod(pdf_file_path, 0o777)
 
@@ -99,9 +121,11 @@ async def generate_invoice(data: InvoiceData = Body(...), background_tasks: Back
         logging.error(f"Unexpected error: {e}")
         raise HTTPException(status_code=500, detail="Internal Server Error")
 
+
 @app.get("/health")
 async def health_check():
     return {"status": "healthy"}
+
 
 def main():
     if len(sys.argv) != 2:
