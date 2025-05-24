@@ -3,13 +3,10 @@ import logging
 import os
 import sys
 
-from fastapi import FastAPI, HTTPException, Body, BackgroundTasks
 from jinja2 import Environment, FileSystemLoader
 from lxml import etree as ET
 from pydantic import ValidationError
-from starlette.responses import FileResponse
 from weasyprint import HTML, Attachment
-from pyfactx import FacturXGenerator
 
 from data_processing.FacturXProcessor import FacturXProcessor
 from data_processing.InvoiceDataProcessor import InvoiceDataProcessor
@@ -24,8 +21,6 @@ logging.getLogger("weasyprint").setLevel(logging.ERROR)
 logging.getLogger("fontTools").setLevel(logging.ERROR)
 logging.getLogger("fontTools.ttLib").setLevel(logging.ERROR)
 logging.getLogger("fontTools.subset").setLevel(logging.ERROR)
-
-app = FastAPI(title="Invoice Generator API")
 
 
 def generate_pdf_invoice(invoice_data_json: str, invoice_locale='fr_FR.UTF-8') -> str:
@@ -52,8 +47,6 @@ def rdf_metadata_generator() -> bytes:
     return ET.tostring(rdf_xml_root)
 
 
-
-
 def write_invoice(invoice_data: InvoiceData):
     # Pre-process the data to get the template arguments
     logging.info("Pre-processing the invoice data...")
@@ -61,7 +54,8 @@ def write_invoice(invoice_data: InvoiceData):
 
     # Generate the Factur-X XML
     logging.info("Generating the Factur-X XML document...")
-    xml_tree = FacturXProcessor.generate_facturx_xml(InvoiceDataProcessor(invoice_data).get_template_data(formatted=False))
+    xml_tree = FacturXProcessor.generate_facturx_xml(
+        InvoiceDataProcessor(invoice_data).get_template_data(formatted=False))
 
     # Read the CSS and add it to the template data
     with open('static/css/style.css', 'r') as f:
@@ -104,27 +98,6 @@ def delete_pdf_file(file_path: str):
         logging.info(f"Deleted the file: {file_path}")
     else:
         logging.warning(f"File not found: {file_path}")
-
-
-@app.post("/generate-invoice", response_class=FileResponse)
-async def generate_invoice(data: InvoiceData = Body(...), background_tasks: BackgroundTasks = BackgroundTasks()):
-    """
-    Generate a PDF invoice from the provided JSON data.
-    """
-    try:
-        pdf_path = write_invoice(invoice_data=data)
-        background_tasks.add_task(delete_pdf_file, pdf_path)
-        return FileResponse(path=pdf_path, filename=os.path.basename(pdf_path), media_type="application/pdf")
-    except HTTPException as he:
-        raise he
-    except Exception as e:
-        logging.error(f"Unexpected error: {e}")
-        raise HTTPException(status_code=500, detail="Internal Server Error")
-
-
-@app.get("/health")
-async def health_check():
-    return {"status": "healthy"}
 
 
 def main():

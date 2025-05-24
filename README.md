@@ -1,8 +1,6 @@
-# 📄 FactureLibre — Professional invoicing for French micro-entrepreneurs
+# 📄 FactureLibre — Professional invoicing for French microentrepreneurs
 
-🇫🇷 **Simplify your invoicing. Stay compliant.**
-
-**FactureLibre** is a lightweight yet powerful tool tailored for French micro-entrepreneurs. It streamlines invoice
+🇫🇷 **FactureLibre** is a lightweight yet powerful tool tailored for French microentrepreneurs. It streamlines invoice
 creation while ensuring full compliance with French tax laws and European e-invoicing standards.
 
 🇪🇺 Built with [pyfactx](https://github.com/vartur/pyfactx), it generates PDF A/3 invoices compatible with the **Factur-X** / **ZUGFeRD** (**EN 16931**)
