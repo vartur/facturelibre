@@ -1,4 +1,5 @@
 import locale
+import re
 from datetime import datetime, timedelta
 from typing import Any
 
@@ -311,6 +312,17 @@ class InvoiceDataProcessor:
 
         return formatted_number
 
+    def create_html_link_keep_www(self, url):
+        """Version that keeps www in the display text if present in input"""
+        if not url.startswith(('http://', 'https://')):
+            if url.startswith('www.'):
+                url = 'https://' + url
+            else:
+                url = 'https://www.' + url
+
+        display_text = re.sub(r'^https?://', '', url)
+        return f'<a href="{url}" target="_blank">{display_text}</a>'
+
     def get_template_data(self, formatted: bool = True) -> dict[str, Any]:
         """
         Generate a dictionary containing invoice data formatted for use in a template.
@@ -348,19 +360,22 @@ class InvoiceDataProcessor:
                      "aprm_code": invoicer_info.aprm_code,
                      "registration_dep": invoicer_info.registration_department,
                      "ape_code": invoicer_info.ape_code,
-                     "invoicer_vat_number": calculate_vat_number_from_siren(invoicer_info.siren),
+                     "invoicer_vat_number": calculate_vat_number_from_siren(
+                         invoicer_info.siren),
                      "invoicer_email": invoicer_info.email,
                      "invoicer_phone_number": invoicer_info.phone_number,
                      "full_phone_number": self.get_phone_number_with_country_code(),
                      "invoicer_has_website": invoicer_info.website is not None,
-                     "invoicer_website": invoicer_info.website,
+                     "invoicer_website": self.create_html_link_keep_www(
+                         invoicer_info.website) if invoicer_info.website is not None else "",
                      "client_name": client_info.name,
                      "client_address_line_1": client_info.address_line_1,
                      "client_postcode": client_info.postcode,
                      "client_city": client_info.city,
                      "client_is_pro": client_info.is_pro,
-                     "client_siren": format_siren(client_info.siren),
-                     "client_vat_number": calculate_vat_number_from_siren(client_info.siren),
+                     "client_siren": format_siren(client_info.siren) if client_info.is_pro else "",
+                     "client_vat_number": calculate_vat_number_from_siren(
+                         client_info.siren) if client_info.is_pro and self.invoice_data.collect_vat else "",
                      "display_contract_number": self.invoice_data.contract_number is not None,
                      "contract_number": self.invoice_data.contract_number,
                      "billing_date": self.get_billing_date_string().upper(),
@@ -369,8 +384,8 @@ class InvoiceDataProcessor:
                      "invoiced_items": self.get_items_details(formatted=formatted),
                      "total_gross_amount": format_price(
                          self.get_invoice_gross_amount()) if formatted else f'{self.get_invoice_gross_amount():.2f}',
-                     "total_vat_amount": format_price(
-                         self.get_invoice_vat_amount()) if formatted else f'{self.get_invoice_vat_amount():.2f}',
+                     "total_vat_amount": (format_price(
+                         self.get_invoice_vat_amount()) if formatted else f'{self.get_invoice_vat_amount():.2f}') if self.invoice_data.collect_vat else "",
                      "total_invoice_amount": format_price(
                          self.get_invoice_total()) if formatted else f'{self.get_invoice_total():.2f}',
                      "payment_period_days": payment_period_details.number_of_days,

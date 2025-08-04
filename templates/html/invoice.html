@@ -57,7 +57,7 @@
 
     <p><i>
         <strong> {% if display_contract_number %}Contrat n°{{ contract_number }}<br>{% endif %}
-            Prestations de services effectuées du {{ billing_period_start }} au {{ billing_period_end }}</strong>
+            Prestations de service effectuées du {{ billing_period_start }} au {{ billing_period_end }}</strong>
     </i></p>
 
     {% if collect_vat %}
@@ -130,7 +130,7 @@
             </tr>
             </tfoot>
         </table>
-        <div style="float: right; font-size: 7px;">
+        <div style="float: right; font-size: 7px;margin-right: 25px; font-style: italic">
             TVA non applicable, art. 293 B du CGI<br>
         </div>
     {% endif %}
@@ -185,7 +185,7 @@
         - <a href="mailto:{{ invoicer_email }}">{{ invoicer_email }}</a>
 
         {% if invoicer_has_website %}
-            - <a href="{{ invoicer_website }}">{{ invoicer_website }}</a>
+            - {{ invoicer_website }}
         {% endif %}
 
     </div>
