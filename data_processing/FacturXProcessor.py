@@ -67,6 +67,7 @@ class FacturXProcessor:
                                                if invoicer_has_trade_name else None)
 
         vat_number = template_data.get("invoicer_vat_number", "").strip()
+        vat_number = vat_number.replace(" ", "")
         specified_tax_registration = vat_number if vat_number else None
 
         seller = TradeParty(
@@ -78,17 +79,19 @@ class FacturXProcessor:
             uri_universal_communication=UniversalCommunication(uri_id=template_data["invoicer_email"])
         )
 
-        buyer_legal_org = LegalOrganization(id=template_data["client_siren"].strip())
+        if client_is_pro:
+            buyer_legal_org = LegalOrganization(id=template_data["client_siren"])
         buyer_trade_address = TradeAddress(postcode=template_data["client_postcode"],
                                            line_one=template_data["client_address_line_1"],
                                            city=template_data["client_city"],
                                            country="FR")
 
+        client_vat_number = template_data.get("client_vat_number", "").replace(" ", "")
         buyer = TradeParty(
             name=template_data["client_name"],
             specified_legal_organisation=buyer_legal_org if client_is_pro else None,
             trade_address=buyer_trade_address,
-            specified_tax_registration=template_data["client_vat_number"].strip()
+            specified_tax_registration=client_vat_number.strip()
             if client_is_pro and collect_vat else None
         )
 
@@ -115,7 +118,7 @@ class FacturXProcessor:
                 specified_trade_product=TradeProduct(name=invoiced_item["name"]),
                 specified_line_trade_agreement=LineTradeAgreement(
                     net_price_product_trade_price=TradePrice(
-                        charge_amount=invoiced_item["price"], unit=UnitCode.ONE)),
+                        charge_amount=float(invoiced_item["price"]), unit=UnitCode.ONE)),
                 specified_line_trade_delivery=LineTradeDelivery(
                     billed_quantity=invoiced_item["quantity"], unit=UnitCode.ONE),
                 specified_line_trade_settlement=LineTradeSettlement(
@@ -130,11 +133,11 @@ class FacturXProcessor:
             applicable_trade_taxes.append((line_total_amount, vat_amount, trade_tax))
 
         monetary_summation = TradeSettlementHeaderMonetarySummation(
-            tax_basis_total_amount=template_data["total_gross_amount"],
-            tax_total_amount=template_data["total_vat_amount"] if collect_vat else 0.0,
-            grand_total_amount=template_data["total_invoice_amount"],
-            due_payable_amount=template_data["total_invoice_amount"],
-            line_total_amount=template_data["total_gross_amount"],
+            tax_basis_total_amount=float(template_data["total_gross_amount"]),
+            tax_total_amount=float(template_data["total_vat_amount"] if collect_vat else 0.0),
+            grand_total_amount=float(template_data["total_invoice_amount"]),
+            due_payable_amount=float(template_data["total_invoice_amount"]),
+            line_total_amount=float(template_data["total_gross_amount"]),
             tax_currency_code=template_data["currency_code"]
         )
 
@@ -151,14 +154,16 @@ class FacturXProcessor:
                 information=f"Par chèque à l'ordre de {payee}"))
 
         if template_data["bank_transfers_accepted"]:
+            iban = template_data["iban"].replace(" ", "")
+            bic = template_data["bic"].replace(" ", "")
             payment_means.append(TradeSettlementPaymentMeans(
                 payment_means_code=PaymentMeansCode.SEPA_CREDIT_TRANSFER,
                 information="Virement SEPA",
                 payee_party_creditor_financial_account=CreditorFinancialAccount(
-                    iban_id=template_data["iban"],
+                    iban_id=iban,
                     account_name=template_data["bank_address"]),
                 payee_specified_creditor_financial_institution=CreditorFinancialInstitution(
-                    bic_id=template_data["bic"])))
+                    bic_id=bic)))
 
         contract_doc = ReferencedDocument(issuer_assigned_id=template_data["contract_number"])
         trade_agreement = HeaderTradeAgreement(
