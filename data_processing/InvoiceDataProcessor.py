@@ -8,7 +8,9 @@ from holidays.countries import France
 
 from currency_symbols import CurrencySymbols
 
+from model.Discount import DiscountType
 from model.InvoiceData import InvoiceData
+from model.InvoicedItem import InvoicedItem
 
 
 def format_price(price: float) -> str:
@@ -78,13 +80,13 @@ def format_vat_number(vat_number: str) -> str:
 
 def format_iban(iban: str) -> str:
     """
-    Format an IBAN number by grouping it into blocks of four characters.
+    Format an IBAN by grouping it into blocks of four characters.
 
     Args:
-        iban (str): The IBAN number to format.
+        iban (str): The IBAN to format.
 
     Returns:
-        str: The formatted IBAN number.
+        str: The formatted IBAN.
     """
     iban = ''.join(iban.split())
     return ' '.join([iban[i:i + 4] for i in range(0, len(iban), 4)])
@@ -135,6 +137,32 @@ def calculate_vat_number_from_siren(siren: str) -> str:
     # Create the VAT number
     vat_number = f"FR {checksum_str} {siren}"
     return vat_number
+
+
+def create_html_link_keep_www(url):
+    """Version that keeps www in the display text if present in input"""
+    if not url.startswith(('http://', 'https://')):
+        if url.startswith('www.'):
+            url = 'https://' + url
+        else:
+            url = 'https://www.' + url
+
+    display_text = re.sub(r'^https?://', '', url)
+    return f'<a href="{url}" target="_blank">{display_text}</a>'
+
+
+def get_item_discount_amount(item: InvoicedItem) -> float:
+    if item.discount is None:
+        return 0.0
+    else:
+        if item.discount.discount_type == DiscountType.AMOUNT:
+            return round(item.discount.amount, 2)
+        else:
+            return round((item.discount.percentage * item.price * item.quantity) / 100, 2)
+
+
+def format_discount_percentage(discount_percentage: float) -> str:
+    return locale.format_string("%.1f", discount_percentage, grouping=True).replace('.', ',')
 
 
 class InvoiceDataProcessor:
@@ -238,22 +266,37 @@ class InvoiceDataProcessor:
         """
         item_details = list()
         for item in self.invoice_data.invoiced_items:
-            gross_amount = item.price * item.quantity
+            discount = get_item_discount_amount(item)
+            if discount != 0.0 and item.discount.discount_type == DiscountType.PERCENTAGE:
+                discount_percentage = format_discount_percentage(
+                    item.discount.percentage) if formatted else item.discount.percentage
+            else:
+                discount_percentage = None
+            gross_amount = (item.price * item.quantity) - discount
             if self.invoice_data.collect_vat:
-                vat_amount = round((item.vat_rate / 100) * item.price * item.quantity, 2)
+                vat_amount = round((item.vat_rate / 100) * gross_amount, 2)
                 total_amount = gross_amount + vat_amount
+
                 item_details.append(
                     {"name": item.name, "price": format_price(item.price) if formatted else f'{item.price:.2f}',
                      "quantity": item.quantity,
                      "gross_amount": format_price(gross_amount) if formatted else f'{gross_amount:.2f}',
                      "vat_rate": format_vat_rate(item.vat_rate) if formatted else f'{item.vat_rate:.1f}',
                      "total_amount": format_price(total_amount) if formatted else f'{total_amount:.2f}',
-                     "vat_amount": f'{vat_amount:.2f}'})
+                     "has_discount": discount != 0.0,
+                     "discount": format_price(discount) if formatted else f'{discount:.2f}',
+                     "vat_amount": f'{vat_amount:.2f}',
+                     "discount_is_percentage": discount != 0.0 and item.discount.discount_type == DiscountType.PERCENTAGE,
+                     "discount_percentage": discount_percentage})
             else:
                 item_details.append(
                     {"name": item.name, "price": format_price(item.price) if formatted else f'{item.price:.2f}',
                      "quantity": item.quantity,
-                     "gross_amount": format_price(gross_amount) if formatted else f'{gross_amount:.2f}'})
+                     "gross_amount": format_price(gross_amount) if formatted else f'{gross_amount:.2f}',
+                     "has_discount": discount != 0.0,
+                     "discount": format_price(discount) if formatted else f'{discount:.2f}',
+                     "discount_is_percentage": discount != 0.0 and item.discount.discount_type == DiscountType.PERCENTAGE,
+                     "discount_percentage": discount_percentage})
         return item_details
 
     def get_invoice_gross_amount(self) -> float:
@@ -303,7 +346,7 @@ class InvoiceDataProcessor:
         # Remove all non-digit characters from the phone number
         digits_only = ''.join([char for char in self.invoice_data.invoicer_info.phone_number if char.isdigit()])
 
-        # Remove leading zero, if present
+        # Remove the leading zero, if present
         if digits_only.startswith('0'):
             digits_only = digits_only[1:]
 
@@ -312,16 +355,8 @@ class InvoiceDataProcessor:
 
         return formatted_number
 
-    def create_html_link_keep_www(self, url):
-        """Version that keeps www in the display text if present in input"""
-        if not url.startswith(('http://', 'https://')):
-            if url.startswith('www.'):
-                url = 'https://' + url
-            else:
-                url = 'https://www.' + url
-
-        display_text = re.sub(r'^https?://', '', url)
-        return f'<a href="{url}" target="_blank">{display_text}</a>'
+    def has_line_item_discount(self):
+        return any(item.discount is not None for item in self.invoice_data.invoiced_items)
 
     def get_template_data(self, formatted: bool = True) -> dict[str, Any]:
         """
@@ -366,7 +401,7 @@ class InvoiceDataProcessor:
                      "invoicer_phone_number": invoicer_info.phone_number,
                      "full_phone_number": self.get_phone_number_with_country_code(),
                      "invoicer_has_website": invoicer_info.website is not None,
-                     "invoicer_website": self.create_html_link_keep_www(
+                     "invoicer_website": create_html_link_keep_www(
                          invoicer_info.website) if invoicer_info.website is not None else "",
                      "client_name": client_info.name,
                      "client_address_line_1": client_info.address_line_1,
@@ -381,6 +416,7 @@ class InvoiceDataProcessor:
                      "billing_date": self.get_billing_date_string().upper(),
                      "billing_period_start": self.get_billing_period_start(),
                      "billing_period_end": self.get_billing_period_end(),
+                     "has_line_item_discount": self.has_line_item_discount(),
                      "invoiced_items": self.get_items_details(formatted=formatted),
                      "total_gross_amount": format_price(
                          self.get_invoice_gross_amount()) if formatted else f'{self.get_invoice_gross_amount():.2f}',

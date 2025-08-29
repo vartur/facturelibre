@@ -5,6 +5,7 @@ from typing_extensions import Self
 
 from model.BillingDetails import BillingDetails
 from model.ClientInfo import ClientInfo
+from model.Discount import Discount
 from model.InvoicedItem import InvoicedItem
 from model.InvoicerInfo import InvoicerInfo
 from model.PaymentInfo import PaymentInfo
@@ -45,6 +46,7 @@ class InvoiceData(BaseModel):
     invoiced_items: list[InvoicedItem] = Field(..., description="The invoiced items")
     billing_details: BillingDetails = Field(..., description="The invoice's billing details")
     contract_number: Optional[str] = Field(None, description="The contract number related to this invoice")
+    global_discount: Optional[Discount] = Field(None, description="The global discount applied to the invoice")
 
     @model_validator(mode='after')
     def validate_invoice_data(self) -> Self:

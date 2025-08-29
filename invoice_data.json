@@ -44,13 +44,18 @@
       "name": "Etude des spécifications techniques",
       "price": 420,
       "quantity": 18,
-      "vat_rate": 20.0
+      "vat_rate": 20.0,
+      "discount": {
+        "discount_type": "Percentage",
+        "percentage": 15.56
+      }
     },
     {
       "name": "Autre service",
       "price": 32.99,
       "quantity": 5,
       "vat_rate": 10.0
+
     }
   ],
   "billing_details": {

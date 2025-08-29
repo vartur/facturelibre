@@ -3,6 +3,8 @@ from typing import Optional
 from pydantic import BaseModel, Field, model_validator
 from typing_extensions import Self
 
+from model.Discount import Discount
+
 
 class InvoicedItem(BaseModel):
     """
@@ -19,7 +21,7 @@ class InvoicedItem(BaseModel):
                                                   the VAT rate, if provided, has at most one decimal place.
 
     Raises:
-        ValueError: If the price has more than two decimal places or the VAT rate has more than one decimal place.
+        ValueError: If the price has more than two decimal places, or the VAT rate has more than one decimal place.
 
     """
 
@@ -27,6 +29,7 @@ class InvoicedItem(BaseModel):
     price: float = Field(..., gt=0.00, description="The invoiced item's price")
     quantity: int = Field(..., gt=0, description="The quantity of invoice items")
     vat_rate: Optional[float] = Field(None, gt=0.0, le=100.0, description="The invoiced item's VAT rate")
+    discount: Optional[Discount] = Field(None, description="The discount applied to the invoiced item")
 
     @model_validator(mode='after')
     def validate_invoice_item(self) -> Self:

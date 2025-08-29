@@ -1,6 +1,7 @@
 from datetime import datetime
 from typing import Any, ClassVar
 
+from pyfactx.AllowanceChargeReasonCode import AllowanceChargeReasonCode
 from pyfactx.CreditorFinancialAccount import CreditorFinancialAccount
 from pyfactx.CreditorFinancialInstitution import CreditorFinancialInstitution
 from pyfactx.DocumentLineDocument import DocumentLineDocument
@@ -11,6 +12,7 @@ from pyfactx.FacturXGenerator import FacturXGenerator
 from pyfactx.HeaderTradeAgreement import HeaderTradeAgreement
 from pyfactx.HeaderTradeDelivery import HeaderTradeDelivery
 from pyfactx.HeaderTradeSettlement import HeaderTradeSettlement
+from pyfactx.Indicator import Indicator
 from pyfactx.InvoiceProfile import InvoiceProfile
 from pyfactx.InvoiceTypeCode import InvoiceTypeCode
 from pyfactx.LegalOrganization import LegalOrganization
@@ -24,6 +26,7 @@ from pyfactx.SupplyChainTradeTransaction import SupplyChainTradeTransaction
 from pyfactx.TaxCategoryCode import TaxCategoryCode
 from pyfactx.TaxTypeCode import TaxTypeCode
 from pyfactx.TradeAddress import TradeAddress
+from pyfactx.TradeAllowanceCharge import TradeAllowanceCharge
 from pyfactx.TradeParty import TradeParty
 from pyfactx.TradePaymentTerms import TradePaymentTerms
 from pyfactx.TradePrice import TradePrice
@@ -81,6 +84,8 @@ class FacturXProcessor:
 
         if client_is_pro:
             buyer_legal_org = LegalOrganization(id=template_data["client_siren"])
+        else:
+            buyer_legal_org = None
         buyer_trade_address = TradeAddress(postcode=template_data["client_postcode"],
                                            line_one=template_data["client_address_line_1"],
                                            city=template_data["client_city"],
@@ -102,10 +107,16 @@ class FacturXProcessor:
         for invoiced_item in template_data["invoiced_items"]:
             line_total_amount = round(float(invoiced_item["price"]) * int(invoiced_item["quantity"]), 2)
 
+            # Apply item-level discount if present
+            discount_amount = float(invoiced_item.get("discount", "0.0"))
+            taxable_basis = round(line_total_amount - discount_amount, 2)
+
             if collect_vat:
-                applicable_vat_rate_str = str(invoiced_item["vat_rate"])
-                trade_tax = cls.VAT_RATES[applicable_vat_rate_str]
-                vat_amount = float(invoiced_item["vat_amount"])
+                vat_rate = float(invoiced_item["vat_rate"])
+
+                vat_amount = round(taxable_basis * vat_rate / 100, 2)
+
+                trade_tax = cls.VAT_RATES.get(str(vat_rate), None)
             else:
                 trade_tax = TradeTax(
                     type_code=TaxTypeCode.VALUE_ADDED_TAX,
@@ -113,6 +124,20 @@ class FacturXProcessor:
                     rate_applicable_percent=0.0
                 )
                 vat_amount = 0.0
+
+            trade_allowance = None
+            if discount_amount != 0:
+                if invoiced_item["discount_is_percentage"]:
+                    trade_allowance = TradeAllowanceCharge(charge_indicator=Indicator(indicator=False),
+                                                           calculation_percent=invoiced_item["discount_percentage"],
+                                                           basis_amount=line_total_amount,
+                                                           actual_amount=discount_amount,
+                                                           reason_code=AllowanceChargeReasonCode.DISCOUNT)
+                else:
+                    trade_allowance = TradeAllowanceCharge(charge_indicator=Indicator(indicator=False),
+                                                           basis_amount=line_total_amount,
+                                                           actual_amount=discount_amount,
+                                                           reason_code=AllowanceChargeReasonCode.DISCOUNT)
 
             line_item = SupplyChainTradeLineItem(
                 specified_trade_product=TradeProduct(name=invoiced_item["name"]),
@@ -123,21 +148,31 @@ class FacturXProcessor:
                     billed_quantity=invoiced_item["quantity"], unit=UnitCode.ONE),
                 specified_line_trade_settlement=LineTradeSettlement(
                     applicable_trade_tax=trade_tax,
+                    specified_trade_allowance_charges=[trade_allowance] if discount_amount != 0 else None,
                     specified_trade_settlement_line_monetary_summation=TradeSettlementLineMonetarySummation(
-                        line_total_amount=line_total_amount)),
+                        line_total_amount=taxable_basis)),
                 associated_document_line_document=DocumentLineDocument(line_id=line_id)
             )
 
             line_id += 1
             line_items.append(line_item)
-            applicable_trade_taxes.append((line_total_amount, vat_amount, trade_tax))
+            applicable_trade_taxes.append((taxable_basis, vat_amount, trade_tax))
+
+        # Calculate global discount if present
+        global_discount_amount = 0.0
+        if template_data.get("global_discount_amount"):
+            global_discount_amount = float(template_data["global_discount_amount"])
+
+        # Apply global discount to monetary summation
+        tax_basis_total = float(template_data["total_gross_amount"]) - global_discount_amount
+        grand_total = float(template_data["total_invoice_amount"]) - global_discount_amount
 
         monetary_summation = TradeSettlementHeaderMonetarySummation(
-            tax_basis_total_amount=float(template_data["total_gross_amount"]),
+            tax_basis_total_amount=tax_basis_total,
             tax_total_amount=float(template_data["total_vat_amount"] if collect_vat else 0.0),
-            grand_total_amount=float(template_data["total_invoice_amount"]),
-            due_payable_amount=float(template_data["total_invoice_amount"]),
-            line_total_amount=float(template_data["total_gross_amount"]),
+            grand_total_amount=grand_total,
+            due_payable_amount=grand_total,
+            line_total_amount=tax_basis_total,
             tax_currency_code=template_data["currency_code"]
         )
 

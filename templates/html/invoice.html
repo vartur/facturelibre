@@ -67,6 +67,9 @@
                 <th>Service</th>
                 <th>Px. unit. HT</th>
                 <th>Qté.</th>
+                {% if has_line_item_discount %}
+                <th>Remise</th>
+                {% endif %}
                 <th>Montant HT</th>
                 <th>TVA</th>
                 <th>Montant TTC</th>
@@ -78,6 +81,15 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.price }} {{ currency_symbol }}</td>
                     <td>{{ item.quantity }}</td>
+                    {% if has_line_item_discount %}
+                        {% if not item.has_discount %}
+                            <td> </td>
+                        {% elif item.discount_is_percentage %}
+                            <td>-{{ item.discount_percentage }} %</td>
+                        {% else %}
+                            <td>-{{ item.discount }} {{ currency_symbol }}</td>
+                        {% endif %}
+                    {% endif %}
                     <td>{{ item.gross_amount }} {{ currency_symbol }}</td>
                     <td>{{ item.vat_rate }} %</td>
                     <td>{{ item.total_amount }} {{ currency_symbol }}</td>
@@ -86,17 +98,29 @@
             </tbody>
             <tfoot>
             <tr>
-                <td colspan="3"></td>
+                {% if has_line_item_discount %}
+                    <td colspan="4"></td>
+                {% else %}
+                    <td colspan="3"></td>
+                {% endif %}
                 <td colspan="2" style="text-align:right;"><i>Total HT</i></td>
                 <td><i>{{ total_gross_amount }} {{ currency_symbol }}</i></td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                {% if has_line_item_discount %}
+                    <td colspan="4"></td>
+                {% else %}
+                    <td colspan="3"></td>
+                {% endif %}
                 <td colspan="2" style="text-align:right;"><i>Total TVA</i></td>
                 <td><i>{{ total_vat_amount }} {{ currency_symbol }}</i></td>
             </tr>
             <tr>
-                <td colspan="3"></td>
+                {% if has_line_item_discount %}
+                    <td colspan="4"></td>
+                {% else %}
+                    <td colspan="3"></td>
+                {% endif %}
                 <td colspan="2" style="text-align:right; "><b>Total TTC</b></td>
                 <td><b>{{ total_invoice_amount }} {{ currency_symbol }}</b></td>
             </tr>
@@ -109,6 +133,9 @@
                 <th>Service</th>
                 <th>Prix unitaire HT</th>
                 <th>Quantité</th>
+                {% if has_line_item_discount %}
+                <th>Remise</th>
+                {% endif %}
                 <th>Montant HT</th>
             </tr>
             </thead>
@@ -118,13 +145,26 @@
                     <td>{{ item.name }}</td>
                     <td>{{ item.price }} {{ currency_symbol }}</td>
                     <td>{{ item.quantity }}</td>
+                    {% if has_line_item_discount %}
+                        {% if not item.has_discount %}
+                            <td> </td>
+                        {% elif item.discount_is_percentage %}
+                            <td>-{{ item.discount_percentage }} %</td>
+                        {% else %}
+                            <td>-{{ item.discount }} {{ currency_symbol }}</td>
+                        {% endif %}
+                    {% endif %}
                     <td>{{ item.gross_amount }} {{ currency_symbol }}</td>
                 </tr>
             {% endfor %}
             </tbody>
             <tfoot>
             <tr>
-                <td colspan="1"></td>
+                {% if has_line_item_discount %}
+                    <td colspan="2"></td>
+                {% else %}
+                    <td colspan="1"></td>
+                {% endif %}
                 <td colspan="2" style="text-align:right;"><b>Total HT</b></td>
                 <td><b>{{ total_gross_amount }} {{ currency_symbol }}</b></td>
             </tr>

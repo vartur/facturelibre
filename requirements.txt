@@ -1,8 +1,7 @@
 pydantic~=2.11.5
-weasyprint~=65.0
+weasyprint~=66.0
 holidays~=0.66
-numpy~=2.2.4
+numpy~=2.3.2
 jinja2~=3.1.6
-lxml~=5.4.0
 currency-symbols~=2.0.3
-pyfactx==0.6.3
+pyfactx==0.6.5
