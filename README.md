@@ -1,4 +1,4 @@
-<a href="https://stand-with-ukraine.pp.ua"><img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg" alt="#StandWithUkraine" /></a>
+[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 # 📄 FactureLibre — Professional invoicing for French microentrepreneurs
 
 🇫🇷 **FactureLibre** is a lightweight yet powerful tool tailored for French microentrepreneurs. It streamlines invoice
