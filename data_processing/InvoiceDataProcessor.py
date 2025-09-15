@@ -254,6 +254,7 @@ class InvoiceDataProcessor:
         else:
             return billing_details.billing_period_end
 
+
     def get_items_details(self, formatted: bool = False):
         """
         Get the details of the invoiced items, including price, quantity, and total amount.
@@ -279,7 +280,7 @@ class InvoiceDataProcessor:
 
                 item_details.append(
                     {"name": item.name, "price": format_price(item.price) if formatted else f'{item.price:.2f}',
-                     "quantity": item.quantity,
+                     "quantity": f"{item.quantity:.2f}".rstrip("0").rstrip(".").replace(".", ",") if formatted else item.quantity,
                      "gross_amount": format_price(gross_amount) if formatted else f'{gross_amount:.2f}',
                      "vat_rate": format_vat_rate(item.vat_rate) if formatted else f'{item.vat_rate:.1f}',
                      "total_amount": format_price(total_amount) if formatted else f'{total_amount:.2f}',
@@ -291,7 +292,7 @@ class InvoiceDataProcessor:
             else:
                 item_details.append(
                     {"name": item.name, "price": format_price(item.price) if formatted else f'{item.price:.2f}',
-                     "quantity": item.quantity,
+                     "quantity": f"{item.quantity:.2f}".rstrip("0").rstrip(".").replace(".", ",") if formatted else item.quantity,
                      "gross_amount": format_price(gross_amount) if formatted else f'{gross_amount:.2f}',
                      "has_discount": discount != 0.0,
                      "discount": format_price(discount) if formatted else f'{discount:.2f}',

@@ -13,7 +13,7 @@ class InvoicedItem(BaseModel):
     Attributes:
         name (str): The name or description of the invoiced item.
         price (float): The price of the invoiced item. Must be greater than 0.
-        quantity (int): The quantity of the invoiced item. Must be greater than 0.
+        quantity (float): The quantity of the invoiced item. Must be greater than 0.
         vat_rate (Optional[float]): The VAT rate applied to the invoiced item, between 0 and 100. Optional.
 
     Methods:
@@ -27,7 +27,7 @@ class InvoicedItem(BaseModel):
 
     name: str = Field(..., description="The invoiced item's name")
     price: float = Field(..., gt=0.00, description="The invoiced item's price")
-    quantity: int = Field(..., gt=0, description="The quantity of invoice items")
+    quantity: float = Field(..., gt=0.00, description="The quantity of invoice items")
     vat_rate: Optional[float] = Field(None, gt=0.0, le=100.0, description="The invoiced item's VAT rate")
     discount: Optional[Discount] = Field(None, description="The discount applied to the invoiced item")
 

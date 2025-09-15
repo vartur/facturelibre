@@ -105,7 +105,7 @@ class FacturXProcessor:
         applicable_trade_taxes: list[tuple[float, float, TradeTax]] = []
 
         for invoiced_item in template_data["invoiced_items"]:
-            line_total_amount = round(float(invoiced_item["price"]) * int(invoiced_item["quantity"]), 2)
+            line_total_amount = round(float(invoiced_item["price"]) * float(invoiced_item["quantity"]), 2)
 
             # Apply item-level discount if present
             discount_amount = float(invoiced_item.get("discount", "0.0"))
